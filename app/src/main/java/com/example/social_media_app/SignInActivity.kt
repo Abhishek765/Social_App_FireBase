@@ -5,6 +5,8 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import com.example.social_media_app.models.User
+import com.example.social_media_app.userDao.UserDao
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
@@ -48,6 +50,14 @@ class SignInActivity : AppCompatActivity() {
         }
     }
 
+    override fun onStart() {
+        super.onStart()
+//        get the curr_user
+        val curr_user = auth.currentUser
+        updateUI(curr_user)
+    }
+
+
     private fun signIn() {
         val signInIntent = googleSignInClient.signInIntent
         startActivityForResult(signInIntent, RC_SIGN_IN)
@@ -80,6 +90,7 @@ class SignInActivity : AppCompatActivity() {
         signIn_bt.visibility = View.GONE
         pg_bar.visibility = View.VISIBLE
 
+//        to run in background thread
         GlobalScope.launch(Dispatchers.IO) {
             val auth = auth.signInWithCredential(credential).await()
             val fireBaseUser = auth.user
@@ -93,7 +104,10 @@ class SignInActivity : AppCompatActivity() {
     private fun updateUI(fireBaseUser: FirebaseUser?) {
         if (fireBaseUser != null) {
 //            If user is not null i.e login successfully jump to main page
-            Log.e(TAG, "updateUI: If part:")
+//            Creating and adding the user using Dao
+            val user = User(fireBaseUser.uid,fireBaseUser.displayName,fireBaseUser.photoUrl.toString())
+            val userDao = UserDao()
+            userDao.addUsers(user)
 
             val mainActivityIntent = Intent(this, MainActivity::class.java)
             startActivity(mainActivityIntent)
